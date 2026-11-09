@@ -5,14 +5,15 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.metrics import classification_report, accuracy_score
 from joblib import dump
-import os
+from pathlib import Path
 
 # === Step 1: Load Dataset ===
-file_path = "voice.csv"  
+file_path = Path(__file__).resolve().with_name("voice.csv.xls")
 
-if not os.path.exists(file_path):
-    raise FileNotFoundError(f"❌ The file '{file_path}' was not found. Please check the path.")
+if not file_path.is_file():
+    raise FileNotFoundError(f"Dataset not found: {file_path}")
 
+# The repository currently stores CSV-formatted data with an .xls suffix.
 df = pd.read_csv(file_path)
 
 # === Step 2: Encode Labels (male/female) ===
@@ -23,19 +24,23 @@ df['label'] = label_encoder.fit_transform(df['label'])  # male=1, female=0
 X = df.drop('label', axis=1)
 y = df['label']
 
-# === Step 4: Normalize Features ===
-scaler = StandardScaler()
-X_scaled = scaler.fit_transform(X)
+# === Step 4: Split before fitting preprocessing to avoid test-set leakage ===
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42, stratify=y
+)
 
-# === Step 5: Train/Test Split ===
-X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.2, random_state=42)
+# Random Forest does not require feature scaling, but retain a fitted scaler
+# artifact for compatibility with downstream code that expects scaler.joblib.
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled = scaler.transform(X_test)
 
 # === Step 6: Train Classifier ===
 model = RandomForestClassifier(n_estimators=100, random_state=42)
-model.fit(X_train, y_train)
+model.fit(X_train_scaled, y_train)
 
 # === Step 7: Evaluate on Test Set ===
-y_pred = model.predict(X_test)
+y_pred = model.predict(X_test_scaled)
 print("\n✅ Accuracy:", accuracy_score(y_test, y_pred))
 print("\n📊 Classification Report:\n", classification_report(y_test, y_pred))
 
