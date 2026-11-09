@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+.env.*
+
+# Generated model artifacts
+gender_model.joblib
+scaler.joblib
+*.pkl
+*.joblib
+
+# Local data exports and editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
