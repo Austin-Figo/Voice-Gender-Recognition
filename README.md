@@ -1,37 +1,58 @@
-# Voice Gender Recognition
+# Voice Gender Recognition — Machine Learning Experiment
 
-A Python machine-learning project that trains a Random Forest classifier on acoustic voice measurements to classify the dataset labels.
+A Python classification experiment using acoustic measurements from a voice dataset and a Random Forest model.
+
+> **Status:** Training workflow documented; microphone inference is experimental and has not been validated end to end.
+
+## Project overview
+
+The training script reads a tabular acoustic-feature dataset, separates training and test data, fits preprocessing on the training partition, trains a Random Forest classifier, and reports held-out evaluation metrics.
+
+The repository also contains a microphone recording script. Its current MFCC feature extraction does not match the feature columns used during model training, so its predictions must not be treated as a valid end-to-end result.
 
 ## Repository contents
 
-- `train_gender_model.py` — loads the tabular dataset, splits training and test data, fits preprocessing on the training partition, trains a Random Forest classifier, and saves model artifacts.
-- `test_model.py` — records microphone audio, computes 20 MFCC means with Librosa, and attempts inference.
-- `voice.csv.xls` — dataset file. Despite its extension, the training script reads it as CSV text.
+| File | Purpose |
+|---|---|
+| train_gender_model.py | Dataset loading, train/test split, preprocessing, model training, and evaluation |
+| test_model.py | Experimental microphone recording and inference script |
+| voice.csv.xls | CSV-formatted dataset stored with an .xls filename extension |
 
-## Environment
+## Technology
 
-Use Python 3.10 or newer. Install the packages used by the scripts:
+Python 3.10+, pandas, NumPy, scikit-learn, joblib, sounddevice, and librosa (experimental microphone script).
+
+## Setup
+
+Create and activate a virtual environment, then install dependencies:
 
 ```bash
+python -m venv .venv
+
+# Windows PowerShell
+.venv\Scripts\Activate.ps1
+
 python -m pip install pandas numpy scikit-learn joblib sounddevice librosa
 ```
 
-## Train
+## Train and evaluate
+
+From the repository root:
 
 ```bash
 python train_gender_model.py
 ```
 
-The script writes `gender_model.joblib` and `scaler.joblib` to the working directory. The scaler is fitted only on the training split to avoid preprocessing leakage.
+The script reads the dataset beside the Python file, performs a stratified train/test split, fits the scaler on the training data only, trains the Random Forest model, prints evaluation metrics, and writes gender_model.joblib and scaler.joblib.
 
-## Important inference limitation
+Do not publish an accuracy figure unless you have run the training script and recorded the result for the exact dataset revision.
 
-The training script uses the dataset's tabular acoustic columns (for example, mean frequency, spectral measures, and pitch-related statistics). The current microphone script computes MFCC features instead. These are not the same feature representation or column order, so the current `test_model.py` pipeline is not validated as a compatible inference path and must not be presented as a reliable end-to-end predictor until a matching feature extractor and evaluation are implemented.
+## Inference limitation
 
-## Evaluation
+The training dataset contains a fixed set of tabular acoustic measurements. The current microphone script computes 20 MFCC means instead. Those feature vectors are not equivalent in definition or ordering, even if their dimensions happen to be similar.
 
-The training script reports accuracy and a classification report on a held-out stratified split. Do not quote a model accuracy unless you have run the script against the exact committed dataset and recorded the output. Verify dataset provenance and redistribution rights before publishing or reusing it.
+A reliable inference workflow requires one consistent feature-extraction implementation for both training and microphone audio, followed by validation on held-out recordings. Until that work is completed, test_model.py is an experimental placeholder rather than a validated predictor.
 
-## Scope
+## Responsible interpretation
 
-This is an educational classification experiment. The model predicts dataset labels from voice characteristics; it does not determine a person's gender identity.
+The model predicts labels present in the dataset from acoustic measurements. It cannot determine a person's gender identity. Dataset provenance, consent, representativeness, and redistribution rights should be checked before reuse or publication.
